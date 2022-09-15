@@ -60,7 +60,6 @@ def handleregister(request):
         registerIds = request.POST['regId']
         registerIds = registerIds.split(",")
         quesNos = Question.objects.values('id', 'level')
-        print(quesNos)
         r1 = []
         r2 = []
         r3 = []
@@ -87,38 +86,46 @@ def handleregister(request):
 
         else:
             d = {}
-
-            temp = registerIds
+            temp = list(registerIds)
             for i in r1:
                 data = random.sample(temp, 2)
                 d[data[0]] = f"{i},"
                 d[data[1]] = f"{i},"
-                temp.remove(d[data[0]])
-                temp.remove(d[data[1]])
+                temp.remove(data[0])
+                temp.remove(data[1])
             
-            temp = registerIds
+            temp = list(registerIds)
             for i in r2:
                 data = random.sample(temp, 2)
                 d[data[0]] += f"{i},"
                 d[data[1]] += f"{i},"
-                temp.remove(d[data[0]])
-                temp.remove(d[data[1]])
+                temp.remove(data[0])
+                temp.remove(data[1])
 
-            temp = registerIds
+            temp = list(registerIds)
             for i in r3:
                 data = random.sample(temp, 2)
                 d[data[0]] += f"{i},"
                 d[data[1]] += f"{i},"
-                temp.remove(d[data[0]])
-                temp.remove(d[data[1]])
+                temp.remove(data[0])
+                temp.remove(data[1])
 
-            temp = registerIds
+            temp = list(registerIds)
             for i in r4:
                 data = random.sample(temp, 2)
                 d[data[0]] += f"{i},0"
                 d[data[1]] += f"{i},0"
-                temp.remove(d[data[0]])
-                temp.remove(d[data[1]])
+                temp.remove(data[0])
+                temp.remove(data[1])
+            print(d)
+            for registerId in d.keys():
+                qlist = d[registerId]
+                myuser = User.objects.create_user(username=registerId, password='hunter')
+                myuser.save()
+                registerId = registerId.strip()
+                Team.objects.create(team_username=registerId, questions = qlist,time_started = datetime.now(),time_finished = datetime.now(),questions_answered = 0)
+                messages.success(request, f"{registerId} has been registered.")
+
 
         return redirect('/hunt/')
     else:
@@ -134,8 +141,6 @@ def handleAnswer(request):
         no = Team.objects.filter(team_username= request.user).values('questions_answered')[0]['questions_answered']
         ques = Question.objects.values('question', 'answer')[teamQuestions[no]]
         userAns = request.POST['userAnswer']
-
-        print(ques)
 
         if userAns.lower().strip() == ques['answer'].lower() and no >= 4:
             Team.objects.filter(team_username= request.user).update(time_finished=datetime.now())
